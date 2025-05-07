@@ -1,0 +1,354 @@
+﻿<Window x:Class="MyFisrtApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MyFisrtApp"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="SENSOR MONITOR" Height="550" Width="800"
+        Icon="Assets/sensors.ico"
+        Background="#14181d">
+
+    <Window.Resources>
+
+        <Style x:Key="HoverCardStyle" TargetType="Border">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                </Setter.Value>
+            </Setter>
+
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Black" BlurRadius="5" ShadowDepth="2" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver" Value="True">
+
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="1.05" ScaleY="1.05"/>
+                        </Setter.Value>
+                    </Setter>
+
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#00FFFF" BlurRadius="20" ShadowDepth="0" Opacity="0.7"/>
+                        </Setter.Value>
+                    </Setter>
+
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="RecordingButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Orange"/>
+            <Setter Property="Width" Value="110"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Margin" Value="10,10,0,0"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                        CornerRadius="5"
+                        BorderBrush="White"
+                        BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF8C00"/>
+                    <Setter Property="BorderBrush" Value="Cyan"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF7F50"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        <!-- Grid'e satır yapısı ekliyoruz: üst satır başlık ve butonlar, alt satır TabControl -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Üst bilgi çubuğu: başlık, saat ve butonlar yatay hizalanır -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="20" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <!-- Başlık -->
+            <TextBlock Text="MPU6050 SENSOR DATA" 
+                   Foreground="White" 
+                   FontSize="24" 
+                   VerticalAlignment="Center"
+                   Margin="0,0,20,0"/>
+
+            <!-- Zaman -->
+            <TextBlock Text="{Binding CurrentDateTimeDisplay}" 
+                   FontSize="18"
+                   Foreground="#aeb0b5"
+                   VerticalAlignment="Center"
+                   Margin="0,0,40,0"/>
+
+            <Button Content="Veri Kaydı Başlat"
+        Command="{Binding StartRecordingCommand}"
+        Style="{StaticResource RecordingButtonStyle}" />
+
+            <Button Content="Veri Kaydı Durdur"
+        Command="{Binding StopRecordingCommand}"
+        Style="{StaticResource RecordingButtonStyle}" />
+
+        </StackPanel>
+
+        <!-- Ana içerik: TabControl artık ikinci satıra yerleşecek -->
+        <TabControl Grid.Row="1" Margin="0,10,0,0" Background="#14181d">
+            <TabItem Header="Datas">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <WrapPanel Margin="20">
+                        <StackPanel Orientation="Vertical" Margin="0,20,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource HoverCardStyle}"
+                            Background="{Binding TemperatureBackground}"
+                            CornerRadius="10"
+                            Margin="10"
+                            Padding="20"
+                            Width="230"
+                            Height="140">
+
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="Temperature" FontSize="16" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                                            <materialDesign:PackIcon Kind="Thermometer" 
+                                                              Width="35" Height="37" 
+                                                              Foreground="White"
+                                                             Margin="0,0,15,0"/>
+                                            <TextBlock Text="{Binding TemperatureDisplay}" FontSize="24" Foreground="White" Width="100"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource HoverCardStyle}"
+                            Background="#191d22"
+                                CornerRadius="10"
+                                Margin="10"
+                                Padding="20"
+                                Width="230"
+                                Height="140">
+                                    <StackPanel Orientation="Vertical">
+
+                                        <TextBlock Text="Accelometer" Foreground="White" FontSize="16"/>
+
+                                        <StackPanel Orientation="Horizontal" Background="{Binding AxBackground}">
+                                            <TextBlock Text="X" Foreground="White" FontSize="12" Margin="0,10,100,0"/>
+                                            <TextBlock Text="{Binding AxDisplay}" Foreground="White" Width="50" Margin="0,10,0,0"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Background="{Binding AyBackground}">
+                                            <TextBlock Text="Y" Foreground="White" FontSize="12" Margin="0,10,100,0"/>
+                                            <TextBlock Text="{Binding AyDisplay}" Foreground="White" Width="50" Margin="0,10,0,0"/>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Background="{Binding AzBackground}">
+                                            <TextBlock Text="Z" Foreground="White" FontSize="12" Margin="0,10,100,0"/>
+                                            <TextBlock Text="{Binding AzDisplay}" Foreground="White" Width="50" Margin="0,10,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource HoverCardStyle}"
+                            Background="#191d22"
+                                CornerRadius="10"
+                                Margin="10"
+                                Padding="20"
+                                Width="480"
+                                Height="140">
+
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="Gyroscope" FontSize="16" Foreground="White"/>
+
+                                        <StackPanel Orientation="Horizontal">
+
+                                            <StackPanel Orientation="Vertical" Margin="0,0,30,0">
+                                                <TextBlock Text="X" FontSize="12" Foreground="White" Margin="0,15,0,0" HorizontalAlignment="Center"/>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <materialDesign:PackIcon Kind="AxisXRotateClockwise"
+                                                                 Foreground="White"
+                                                                 Width="35"
+                                                                 Height="37"
+                                                                 Margin="0,0,20,0"/>
+                                                    <TextBlock Text="{Binding GxDisplay}" Background="{Binding GxBackground}" FontSize="16" Foreground="White" Width="72.5" Margin="0,7.5,0,0"/>
+                                                </StackPanel>
+
+                                            </StackPanel>
+
+                                            <StackPanel Orientation="Vertical" Margin="0,0,30,0">
+                                                <TextBlock Text="Y" FontSize="12" Foreground="White" Margin="0,15,0,0" HorizontalAlignment="Center"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="AxisYRotateClockwise"
+                                                                 Foreground="White"
+                                                                 Width="35"
+                                                                 Height="37"
+                                                                 Margin="0,0,20,0"/>
+                                                    <TextBlock Text="{Binding GyDisplay}" Background="{Binding GyBackground}" FontSize="16" Foreground="White" Width="72.5" Margin="0,7.5,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="Z" FontSize="12" Foreground="White" Margin="0,15,0,0" HorizontalAlignment="Center"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="AxisZRotateClockwise"
+                                                                 Foreground="White"
+                                                                 Width="35"
+                                                                 Height="37"
+                                                                 Margin="0,0,20,0"/>
+                                                    <TextBlock Text="{Binding GzDisplay}" Background="{Binding GzBackground}" FontSize="16" Foreground="White" Width="72.5" Margin="0,7.5,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource HoverCardStyle}"
+                                Background="{Binding RollDegreeBackground}" 
+                                CornerRadius="10"
+                                Width="230"
+                                Height="140"
+                                Margin="10"
+                                Padding="20">
+
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="Roll Degree" FontSize="16" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                                            <materialDesign:PackIcon Kind="CrosshairsGps"
+                                                                 Foreground="White"
+                                                                 Width="35"
+                                                                 Height="37"
+                                                                 Margin="0,0,20,0"/>
+                                            <TextBlock Text="{Binding RollDisplay}" FontSize="24" Foreground="White" Width="100"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource HoverCardStyle}"
+                                Background="{Binding PitchDegreeBackground}"
+                                CornerRadius="10"
+                                Width="230"
+                                Height="140"
+                                Margin="10"
+                                Padding="20">
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="Pitch Degree" FontSize="16" Foreground="White"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                                            <materialDesign:PackIcon Kind="CrosshairsGps"
+                                                                 Foreground="White"
+                                                                 Width="35"
+                                                                 Height="37"
+                                                                 Margin="0,0,20,0"/>
+                                            <TextBlock Text="{Binding PitchDisplay}" FontSize="24" Foreground="White" Width="100"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                            <ListBox ItemsSource="{Binding LogList}"
+                             Background="#191d22"
+                             Foreground="White"
+                             Width="470"
+                             Height="140"
+                             Margin="10"
+                             FontSize="14"
+                             BorderThickness="0"
+                             SelectionMode="Extended"
+                             ></ListBox>
+                            <StackPanel>
+
+                            </StackPanel>
+                        </StackPanel>
+
+                    </WrapPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Graphics">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+
+                    <Grid Background="#14181d">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="Temperature Values" Foreground="White" FontSize="16" Margin="10"/>
+                            <lvc:CartesianChart Series="{Binding TemperatureSeries}"
+                                            Foreground="White"
+                                            LegendLocation="Right"
+                                            Height="150"
+                                            Margin="0,0,0,0"
+                                            Zoom="Xy" Pan="Xy">
+
+                                <lvc:CartesianChart.AxisX>
+                                    <lvc:Axis Title="Zaman" LabelFormatter="{Binding TimeFormatter}"/>
+                                </lvc:CartesianChart.AxisX>
+
+                                <lvc:CartesianChart.AxisY>
+                                    <lvc:Axis Title="Sıcaklık"/>
+                                </lvc:CartesianChart.AxisY>
+
+                            </lvc:CartesianChart>
+
+                            <StackPanel>
+                                <TextBlock Text="Accelerometer Values" Foreground="White" FontSize="16" Margin="10"/>
+                                <lvc:CartesianChart Series="{Binding AccellSeries}" Height="150" Margin="10" Zoom="Xy" Pan="Xy">
+
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Zaman"
+                                          LabelFormatter="{Binding TimeFormatter}"
+                                          Foreground="White"/>
+                                    </lvc:CartesianChart.AxisX>
+
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Değer" Foreground="White"/>
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="Gyro Values" Foreground="White" FontSize="16" Margin="10"/>
+                                <lvc:CartesianChart Series="{Binding GyroSeries}" Height="150" Margin="10" Zoom="Xy" Pan="Xy">
+
+                                    <lvc:CartesianChart.AxisX>
+                                        <lvc:Axis Title="Zaman"
+                                              LabelFormatter="{Binding TimeFormatter}"
+                                              Foreground="White"/>
+                                    </lvc:CartesianChart.AxisX>
+
+                                    <lvc:CartesianChart.AxisY>
+                                        <lvc:Axis Title="Değer" Foreground="White"/>
+                                    </lvc:CartesianChart.AxisY>
+                                </lvc:CartesianChart>
+
+                            </StackPanel>
+                        </StackPanel>
+
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
