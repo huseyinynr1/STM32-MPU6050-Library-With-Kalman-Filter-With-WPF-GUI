@@ -1,79 +1,132 @@
-# STM32 MPU6050 Library with Kalman Filter + WPF GUI
+# STM32 DC Motor PID Kontrol (Encoder) + Qt (QML) GUI
 
-This repository contains a complete STM32 library for interfacing with the MPU6050 IMU sensor (Accelerometer + Gyroscope),  
-and a WPF GUI application to visualize, log, and monitor sensor data in real-time.
+**STM32F407** üzerinde **quadrature encoder** geri beslemesiyle çalışan **kapalı çevrim PID** tabanlı DC motor kontrolü ve bu sistemi gerçek zamanlı izlemek, günlüğe almak ve PID ayarlarını değiştirmek için modern bir **Qt/QML** panosu.
 
-## 🧠 Features
+> Bu README, projeyi ve son arayüzü özetler; kurulum veya nasıl kullanılır bölümleri özellikle yer almaz.
 
-### Embedded Firmware
-- I2C communication with MPU6050
-- Accelerometer and gyroscope raw value readings
-- Conversion to physical units (g, °/s, °C)
-- Offset calibration
-- Kalman filtering for roll and pitch angles
+---
 
-### WPF GUI Application
-- Real-time data reading from SerialPort
-- Display of temperature, acceleration, gyro, and angles
-- Live charting with `LiveCharts`
-- CSV data logging to desktop
-- Stylish MVVM-based responsive interface
-- Visual alert system and dynamic color feedback
+## 🔎 Genel Bakış
 
-## 📷 Screenshots
+- **Firmware** (C/HAL): Encoder geri beslemesi, PWM sürüşü ve bir PID döngüsü. UART üzerinden deterministik JSON telemetrisi üretir; setpoint ve kazançlar komutlarla yönetilir.
+- **GUI** (Qt 6/QML + C++): Gösterge (RPM, Speed, Pulse), encoder açı ve ivme kartları, PID sürgüleri, bağlantı paneli (COM/baud, data/stop bits, parity, flow control), keep-alive ve arama/dışa aktarma destekli kapsamlı bir log sistemi.
 
-### 1. STM32CubeIDE Debug View
-Shows live variable values like Kalman angle, filtered axes:
-![STM32CubeIDE](Stm32cubeIde.png)
+---
 
-### 2. WPF Sensor Monitor - Real-Time Data View
-Displays sensor data with alerts and logging:
-![WPF GUI](WPF.png)
+## 🧠 Temel Özellikler
 
-### 3. WPF Sensor Monitor - Chart View
-Visualizes real-time acceleration and gyro data:
-![Charts](WPF-Graph.png)
+### Gömülü (STM32)
+- Kapalı çevrim **PID kontrol** (ayarlanabilir Kp/Ki/Kd)
+- **Quadrature encoder** ile RPM / hız / açı hesaplama
+- **JSON-over-UART** telemetri (satır sonu ile ayrılmış)
+- **İnsan okunur komutlar** ile tuning ve setpoint yönetimi
 
-### 4. Exported CSV Data in Excel
-Logged data in structured format:
-![Excel CSV](Excel.png)
+### Masaüstü (Qt/QML)
+- **Canlı göstergeler**: RPM, Pulse, Speed  
+- **Açı / İvme** kartları (dinamik renk geri bildirimi)  
+- **PID Parametreleri** bölümü (Submit / Reset)  
+- **Connection** paneli: port/baud, data/stop bits, parity, flow control  
+- **Keep-Alive** penceresi: payload, CR/LF anahtarları, beklenen cevap  
+- **Loglar**: event & periodic akışı, **geniş görünüm**, **arama**, **kaydet**, **CSV/JSON dışa aktarma**  
+- **Profiller**: seri bağlantı profili kaydet/yükle
 
-## 📁 Folder Structure
+---
 
-```
-├── Core
-│   └── Src, Inc                 # STM32 project files
-├── Drivers
-│   └── MPU6050                  # Sensor driver code
-├── WPF_GUI/
-│   └── ViewModel, Helpers, XAML # C# desktop app
-├── Assets                       # Icons and styles
-├── README.md
+## 🧾 Telemetri ve Komutlar (özet)
+
+**Telemetri (MCU → PC)** — her satır bir JSON nesnesidir:
+```json
+{"rpm":177,"speed":87.5,"pwm":999,"angle":280,"acc":0.0,"kp":1.0,"ki":0.02,"kd":0.0,"err":1500}
 ```
 
-## 🔧 Technologies Used
-- STM32 HAL (C)
-- C# WPF (.NET Core)
-- MVVM Pattern
-- LiveCharts.Wpf
-- SerialPort Communication
-- CSV Logging
+**Komutlar (PC → MCU)** — insan okunur metin:
+```
+PID, Kp:1.20 , Ki:0.02 , Kd:0.00
+Speed: 1500
+Rpm: 800
+Pulse: 1200
+TXT:OK
+```
 
-## 📝 How to Use
+**Log Dışa Aktarım (JSON örneği)** — periodic ve event girdileri:
+```json
+[
+  { "type":"periodic","speed":75,"rpm":112,"pwm":999,"msg":"...Speed=75.00, RPM=112, PWM=999, Angle=160.00, Acc=312.50, Error=1425.00" },
+  { "type":"event","msg":"...Pid parametreleri değiştirildi. Yeni Kp: 1.00, Yeni Ki: 0.02, Yeni Kd: 0.00" },
+  { "type":"event","msg":"...Hedef hız değiştirildi. Yeni Hız: 1500.00" }
+]
+```
 
-1. Flash the STM32 firmware
-2. Connect your PC via USB and open the WPF application
-3. Select the COM port and start the sensor
-4. Use “Start/Stop” buttons to record data
+---
 
-## ⚙️ Requirements
-- STM32F407VET6 or compatible
-- STM32CubeIDE
-- MPU6050 sensor module
-- .NET Core SDK
-- Visual Studio or Rider (for WPF app)
+## 🎬 Demo Video
 
-## 👨‍💻 Author
+**Demoyu izle:** [docs/demo.mp4](docs/demo.mp4)
 
-**Hüseyin Yanar**  
-[GitHub Profile](https://github.com/huseyinynr1)
+[![Demoya gitmek için tıkla](docs/1.png)](docs/demo.mp4)
+
+---
+
+## 📷 Ekran Görüntüleri
+
+![Ana pano: göstergeler, açı/ivme kartları, PID bölümü, bağlantı ve loglar](docs/1.png)
+
+![Logların geniş görünümü ve log dışa aktarma düğmeleri (CSV/JSON)](docs/2.png)
+
+![Seri profil kaydetme penceresi](docs/3.png)
+
+![Keep-Alive penceresi](docs/4.png)
+
+![Porta Mesaj penceresi (bağlanınca gönder, CR/LF anahtarları)](docs/5.png)
+
+![Log günlük kayıt (JSON)](docs/6.png)
+
+---
+
+## 📁 Proje Dosyaları
+
+```text
+├── DC_MOTOR_CONTROL_WITH_PID/
+│   ├── Core
+│   │   ├── Inc                   # pid_control.h, JGB37-520_Encoder.h, QtDataExchange.h, vb.
+│   │   └── Src                   # main.c, pid_control.c, JGB37-520_Encoder.c, QtDataExchange.c, vb.
+│   ├── Drivers                   # CMSIS + HAL
+│   └── *.ioc                     # STM32CubeMX proje ayarı
+├── DC_Motor_Control_GUI/
+│   ├── backend                   # SerialManager, SpeedController, PidManager, RpmReceiver, vb.
+│   ├── components                # QML bileşenleri (gauge, panel, vs.)
+│   ├── uihelpers                 # QML yardımcıları / utils
+│   ├── Main.qml
+│   ├── main.cpp
+│   └── CMakeLists.txt
+├── docs/
+│   ├── 1.png                     # Ana pano
+│   ├── 2.png                     # Logların geniş görünümü
+│   ├── 3.png                     # Profil kaydetme
+│   ├── 4.png                     # Keep-Alive
+│   ├── 5.png                     # Porta mesaj
+│   ├── 6.png                     # Log JSON
+│   └── demo.mp4                  # Kısa tanıtım videosu
+```
+
+---
+
+## 🧩 Üst Düzey Mimari
+
+```
+┌───────────────┐     JSON (newline)      ┌────────────────────┐
+│  STM32 (HAL)  │ ───────────────────────▶ │  Qt/C++ Backend    │
+│  PID + Encoder│ ◀─────────────────────── │  QSerialPort I/O   │
+└───────────────┘  Commands (text)        └─────────┬──────────┘
+                                                    │
+                                             ┌──────▼──────┐
+                                             │   QML UI    │
+                                             │ Gauge/Log   │
+                                             └─────────────┘
+```
+
+---
+
+## 📜 Yazar
+ 
+- **Yazar**: *Hüseyin Yanar*
